@@ -1,8 +1,7 @@
-import type * as CF from "@cloudflare/workers-types";
 import { type DriverFactory, joinKeys } from "./utils/index.ts";
-import { getKVBinding } from "./utils/cloudflare.ts";
+import { getKVBinding, type KVNamespaceLike } from "./utils/cloudflare.ts";
 export interface KVOptions {
-  binding?: string | CF.KVNamespace;
+  binding?: string | KVNamespaceLike;
   /** Adds prefix to all stored keys */
   base?: string;
 
@@ -17,7 +16,7 @@ export interface KVOptions {
 
 const DRIVER_NAME = "cloudflare-kv-binding";
 
-const driver: DriverFactory<KVOptions, CF.KVNamespace | Promise<CF.KVNamespace>> = (opts) => {
+const driver: DriverFactory<KVOptions, KVNamespaceLike | Promise<KVNamespaceLike>> = (opts) => {
   const r = (key: string = "") => (opts.base ? joinKeys(opts.base, key) : key);
 
   async function getKeys(base: string = "") {
