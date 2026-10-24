@@ -1,7 +1,40 @@
-import type { KVNamespace, R2Bucket } from "@cloudflare/workers-types";
 import { createError } from "./index.ts";
 
-type Binding = KVNamespace | R2Bucket;
+/**
+ * Minimal structural shape of a Workers KV namespace, covering only what the
+ * `cloudflare-kv-binding` driver calls. Both the global and the module form of
+ * `@cloudflare/workers-types` satisfy it, with or without the DOM lib loaded,
+ * where the web globals (`ReadableStream`, `Headers`, ...) resolve differently.
+ */
+export interface KVNamespaceLike {
+  get(key: string): Promise<string | null>;
+  put(
+    key: string,
+    value: string,
+    options?: { expirationTtl?: number; [option: string]: unknown },
+  ): Promise<void>;
+  delete(key: string): Promise<void>;
+  list(options?: { prefix?: string; cursor?: string }): Promise<{
+    keys: { name: string }[];
+    list_complete: boolean;
+    cursor?: string;
+  }>;
+}
+
+/**
+ * Minimal structural shape of a Workers R2 bucket, covering only what the
+ * `cloudflare-r2-binding` driver calls. Both the global and the module form of
+ * `@cloudflare/workers-types` satisfy it, with or without the DOM lib loaded.
+ */
+export interface R2BucketLike {
+  head(key: string): Promise<{ uploaded: Date } | null>;
+  get(key: string, options?: unknown): Promise<{ text(): Promise<string> } | null>;
+  put(key: string, value: unknown, options?: unknown): Promise<unknown>;
+  delete(keys: string | string[]): Promise<void>;
+  list(options?: { prefix?: string }): Promise<{ objects: { key: string }[] }>;
+}
+
+type Binding = KVNamespaceLike | R2BucketLike;
 
 let _env: Promise<Record<string, unknown> | undefined> | undefined;
 
@@ -42,11 +75,13 @@ function validateBinding<T extends Binding>(binding: T | undefined, bindingName:
 }
 
 export function getKVBinding(
-  binding: KVNamespace | string = "STORAGE",
-): KVNamespace | Promise<KVNamespace> {
+  binding: KVNamespaceLike | string = "STORAGE",
+): KVNamespaceLike | Promise<KVNamespaceLike> {
   return getBinding(binding);
 }
 
-export function getR2Binding(binding: R2Bucket | string = "BUCKET"): R2Bucket | Promise<R2Bucket> {
+export function getR2Binding(
+  binding: R2BucketLike | string = "BUCKET",
+): R2BucketLike | Promise<R2BucketLike> {
   return getBinding(binding);
 }
