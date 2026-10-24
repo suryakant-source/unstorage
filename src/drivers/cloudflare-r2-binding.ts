@@ -1,9 +1,8 @@
-import type * as CF from "@cloudflare/workers-types";
 import { type DriverFactory, joinKeys } from "./utils/index.ts";
-import { getR2Binding } from "./utils/cloudflare.ts";
+import { getR2Binding, type R2BucketLike } from "./utils/cloudflare.ts";
 
 export interface CloudflareR2Options {
-  binding?: string | CF.R2Bucket;
+  binding?: string | R2BucketLike;
   base?: string;
 }
 
@@ -11,7 +10,7 @@ export interface CloudflareR2Options {
 
 const DRIVER_NAME = "cloudflare-r2-binding";
 
-const driver: DriverFactory<CloudflareR2Options, CF.R2Bucket | Promise<CF.R2Bucket>> = (
+const driver: DriverFactory<CloudflareR2Options, R2BucketLike | Promise<R2BucketLike>> = (
   opts = {},
 ) => {
   const r = (key: string = "") => (opts.base ? joinKeys(opts.base, key) : key);
